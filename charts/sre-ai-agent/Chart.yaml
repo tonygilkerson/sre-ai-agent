@@ -1,0 +1,7 @@
+apiVersion: v2
+name: sre-ai-agent
+description: A Helm chart for my dagger SRE AI based agent
+
+type: application
+version: 0.1.0
+appVersion: "1.16.0"

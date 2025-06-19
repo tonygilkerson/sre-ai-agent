@@ -1,0 +1,23 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: kube-config
+data:
+  config: |
+    apiVersion: v1
+    kind: Config
+    clusters:
+    - cluster:
+        server: https://kubernetes.default
+        certificate-authority: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
+      name: in-cluster
+    contexts:
+    - context:
+        cluster: in-cluster
+        user: in-cluster-user
+      name: in-cluster-context
+    current-context: in-cluster-context
+    users:
+    - name: in-cluster-user
+      user:
+        tokenFile: /var/run/secrets/kubernetes.io/serviceaccount/token

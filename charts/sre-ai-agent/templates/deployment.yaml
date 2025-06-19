@@ -1,0 +1,29 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: sre-ai-agent
+  name: sre-ai-agent
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: sre-ai-agent
+  template:
+    metadata:
+      labels:
+        app: sre-ai-agent
+    spec:
+      serviceAccountName: sre-ai-agent
+      containers:
+      - name: main
+        image: ubuntu:latest
+        command: ["/bin/bash", "-c", "while true; do date; echo 'ZZZzzz..'; sleep 1m; done"]
+        volumeMounts:
+        - name: kube-config
+          mountPath: /root/.kube/config
+          subPath: config
+    volumes:
+      - name: kube-config
+        configMap:
+          name: kube-config
