@@ -18,12 +18,27 @@ spec:
       containers:
       - name: main
         image: ubuntu:latest
-        command: ["/bin/bash", "-c", "while true; do date; echo 'ZZZzzz..'; sleep 1m; done"]
+        command:
+        - /bin/bash
+        - -c
+        - | 
+          while true; do 
+            date; echo 'ZZZzzz..'; sleep 1m; 
+          done
+        env:
+        - name: "_EXPERIMENTAL_DAGGER_RUNNER_HOST"
+          value: "unix:///run/dagger/engine.sock"
         volumeMounts:
         - name: kube-config
           mountPath: /root/.kube/config
           subPath: config
-    volumes:
-      - name: kube-config
-        configMap:
-          name: kube-config
+        - name: dagger-engine-socket
+          mountPath: /run/dagger
+      volumes:
+        - name: kube-config
+          configMap:
+            name: kube-config
+        - name: dagger-engine-socket
+          hostPath:
+            path: /run/dagger-dagger
+            type: ""

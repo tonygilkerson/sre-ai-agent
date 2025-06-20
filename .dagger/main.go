@@ -16,6 +16,7 @@ package main
 
 import (
 	"context"
+	"os"
 	"dagger/sre-ai-agent/internal/dagger"
 )
 
@@ -41,13 +42,22 @@ func (m *SreAiAgent) BuildEnv() *dagger.Container {
 
 	return dag.Container().
 		From("ubuntu:latest").
-		WithWorkdir("/usr/local/bin").
 		WithExec([]string{"sh", "-c", "apt-get update && apt-get install -y curl"}).
 		WithExec([]string{"sh", "-c", "curl -fsSL https://dl.dagger.io/dagger/install.sh | BIN_DIR=/usr/local/bin sh"}).
-		WithExec([]string{"sh", "-c", "curl -LO 'https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl'"}). 
-		WithExec([]string{"chmod", "+x", "/usr/local/bin/kubectl"})
-
+		WithWorkdir("/agent")
 }
 
+// Publish the application container after building and testing it on-the-fly
+func (m *SreAiAgent) Publish(ctx context.Context) (string, error) {
 
-//export _EXPERIMENTAL_DAGGER_RUNNER_HOST="kube-pod://dagger-engine-smbm4?namespace=dagger&container=dagger-engine"
+	  client := dagger.Connect()
+
+    // Set up registry authentication
+    username := "tonygilkerson"
+    password := client.SetSecret("docker-password", os.Getenv("DOCKER_PASSWORD")) 
+		ref := "docker.io/tonygilkerson/sre-ai-agent:dev"
+
+		return m.BuildEnv().WithRegistryAuth("docker.io", username, password).
+			Publish(ctx, ref)
+
+}
