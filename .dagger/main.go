@@ -16,8 +16,9 @@ package main
 
 import (
 	"context"
-	"os"
 	"dagger/sre-ai-agent/internal/dagger"
+	"fmt"
+	 "os"
 )
 
 type SreAiAgent struct{}
@@ -48,16 +49,27 @@ func (m *SreAiAgent) BuildEnv() *dagger.Container {
 }
 
 // Publish the application container after building and testing it on-the-fly
-func (m *SreAiAgent) Publish(ctx context.Context) (string, error) {
+func (m *SreAiAgent) Publish(
+	ctx context.Context,
+	// Registry address
+	registry string,
+	// Registry username
+	username string,
+	// Registry password
+	password *dagger.Secret,
+) (string, error) {
 
-	  client := dagger.Connect()
-
-    // Set up registry authentication
-    username := "tonygilkerson"
-    password := client.SetSecret("docker-password", os.Getenv("DOCKER_PASSWORD")) 
-		ref := "docker.io/tonygilkerson/sre-ai-agent:dev"
-
-		return m.BuildEnv().WithRegistryAuth("docker.io", username, password).
-			Publish(ctx, ref)
-
+	return m.BuildEnv().
+		WithRegistryAuth(registry, username, password).
+		Publish(ctx, fmt.Sprintf("%s/%s/sre-ai-agent:dev", registry, username))
 }
+
+// func (m *SreAiAgent) GetSaToken() (string,error) {
+// 	data, err := os.ReadFile("/var/run/secrets/kubernetes.io/serviceaccount/token")
+// 	if err != nil {
+// 			println("DEBUG err", err)
+// 		return "", err
+// 	}
+// 	println("DEBUG SA token " + string(data))
+// 	return string(data), nil
+// } 

@@ -17,7 +17,7 @@ spec:
       serviceAccountName: sre-ai-agent
       containers:
       - name: main
-        image: ubuntu:latest
+        image: ghcr.io/tonygilkerson/sre-ai-agent:dev
         command:
         - /bin/bash
         - -c
@@ -29,15 +29,9 @@ spec:
         - name: "_EXPERIMENTAL_DAGGER_RUNNER_HOST"
           value: "unix:///run/dagger/engine.sock"
         volumeMounts:
-        - name: kube-config
-          mountPath: /root/.kube/config
-          subPath: config
         - name: dagger-engine-socket
           mountPath: /run/dagger
       volumes:
-        - name: kube-config
-          configMap:
-            name: kube-config
         - name: dagger-engine-socket
           hostPath:
             path: /run/dagger-dagger
