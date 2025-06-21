@@ -1,5 +1,5 @@
 {
-  "name": "sre-ai-agent",
+  "name": "sre-ai-agent-ci",
   "engineVersion": "v0.18.9",
   "sdk": {
     "source": "go"

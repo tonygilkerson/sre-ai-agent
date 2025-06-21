@@ -4,7 +4,7 @@ And AI Agent that will act as an SRE and look after my cluster
 
 ## CI
 
-To run the dagger CI
+To run the agent's CI
 
 ```sh
 source .env
@@ -16,7 +16,7 @@ publish ghcr.io tonygilkerson env://GHCR_TOKEN
 dagger -c 'publish ghcr.io tonygilkerson env://GHCR_TOKEN'
 
 # Dagger Shell
-dagger call publish --registry=ghcr.io --username=tonygilkerson --password=env://GHCR_TOKEN
+dagger call publish --source=./agent --registry=ghcr.io --username=tonygilkerson --password=env://GHCR_TOKEN
 ```
 
 Useful for debugging:

@@ -1,4 +1,4 @@
-// A generated module for SreAiAgent functions
+// A generated module for SreAiAgentCi functions
 //
 // This module has been generated via dagger init and serves as a reference to
 // basic module structure as you get started with Dagger.
@@ -16,40 +16,25 @@ package main
 
 import (
 	"context"
-	"dagger/sre-ai-agent/internal/dagger"
+	"dagger/sre-ai-agent-ci/internal/dagger"
 	"fmt"
-	 "os"
 )
 
-type SreAiAgent struct{}
-
-// Returns a container that echoes whatever string argument is provided
-func (m *SreAiAgent) ContainerEcho(stringArg string) *dagger.Container {
-	return dag.Container().From("alpine:latest").WithExec([]string{"echo", stringArg})
-}
-
-// Returns lines that match a pattern in the files of the provided Directory
-func (m *SreAiAgent) GrepDir(ctx context.Context, directoryArg *dagger.Directory, pattern string) (string, error) {
-	return dag.Container().
-		From("alpine:latest").
-		WithMountedDirectory("/mnt", directoryArg).
-		WithWorkdir("/mnt").
-		WithExec([]string{"grep", "-R", pattern, "."}).
-		Stdout(ctx)
-}
+type SreAiAgentCi struct{}
 
 // Build a ready-to-use development environment
-func (m *SreAiAgent) BuildEnv() *dagger.Container {
+func (m *SreAiAgentCi) BuildEnv(source *dagger.Directory) *dagger.Container {
 
 	return dag.Container().
 		From("ubuntu:latest").
 		WithExec([]string{"sh", "-c", "apt-get update && apt-get install -y curl"}).
 		WithExec([]string{"sh", "-c", "curl -fsSL https://dl.dagger.io/dagger/install.sh | BIN_DIR=/usr/local/bin sh"}).
+		WithDirectory("/agent", source ).
 		WithWorkdir("/agent")
 }
 
 // Publish the application container after building and testing it on-the-fly
-func (m *SreAiAgent) Publish(
+func (m *SreAiAgentCi) Publish(
 	ctx context.Context,
 	// Registry address
 	registry string,
@@ -57,19 +42,13 @@ func (m *SreAiAgent) Publish(
 	username string,
 	// Registry password
 	password *dagger.Secret,
+	// agent source
+	source *dagger.Directory,
 ) (string, error) {
 
-	return m.BuildEnv().
+	return m.BuildEnv(source).
 		WithRegistryAuth(registry, username, password).
-		Publish(ctx, fmt.Sprintf("%s/%s/sre-ai-agent:dev", registry, username))
+		Publish(ctx, fmt.Sprintf("%s/%s/sre-ai-agent:latest", registry, username))
 }
 
-// func (m *SreAiAgent) GetSaToken() (string,error) {
-// 	data, err := os.ReadFile("/var/run/secrets/kubernetes.io/serviceaccount/token")
-// 	if err != nil {
-// 			println("DEBUG err", err)
-// 		return "", err
-// 	}
-// 	println("DEBUG SA token " + string(data))
-// 	return string(data), nil
-// } 
+
