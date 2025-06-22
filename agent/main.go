@@ -17,6 +17,12 @@ package main
 import (
 	"context"
 	"dagger/sre-ai-agent/internal/dagger"
+	"fmt"
+	"io"
+	"net/http"
+	"crypto/tls"
+  "crypto/x509"
+
 )
 
 type SreAiAgent struct{}
@@ -34,4 +40,44 @@ func (m *SreAiAgent) GrepDir(ctx context.Context, directoryArg *dagger.Directory
 		WithWorkdir("/mnt").
 		WithExec([]string{"grep", "-R", pattern, "."}).
 		Stdout(ctx)
+}
+
+// Returns a list of pods from the Kubernetes API
+func (m *SreAiAgent) GetKubernetesPods(ctx context.Context, kubernetesServiceAccountDir *dagger.Directory,) (string, error) {
+    // Read the service account token
+    token, err := kubernetesServiceAccountDir.File("token").Contents(ctx)
+    if err != nil {
+        return "", fmt.Errorf("failed to read service account token: %w", err)
+    }
+
+    // Read the CA certificate and set up HTTP client
+    caCertString, err := kubernetesServiceAccountDir.File("ca.crt").Contents(ctx)
+    if err != nil {
+        return "", fmt.Errorf("failed to read CA cert: %w", err)
+    }
+		caCert := []byte(caCertString)
+    caCertPool := x509.NewCertPool()
+    caCertPool.AppendCertsFromPEM(caCert)
+    tlsConfig := &tls.Config{RootCAs: caCertPool}
+    client := &http.Client{Transport: &http.Transport{TLSClientConfig: tlsConfig}}
+
+    // Create and send the request
+    req, err := http.NewRequest("GET", "https://kubernetes.default.svc/api/v1/pods", nil)
+    if err != nil {
+        return "", fmt.Errorf("failed to create request: %w", err)
+    }
+    req.Header.Set("Authorization", "Bearer "+string(token))
+
+    resp, err := client.Do(req)
+    if err != nil {
+        return "", fmt.Errorf("failed to call Kubernetes API: %w", err)
+    }
+    defer resp.Body.Close()
+
+    body, err := io.ReadAll(resp.Body)
+    if err != nil {
+        return "", fmt.Errorf("failed to read response body: %w", err)
+    }
+
+    return string(body), nil
 }
