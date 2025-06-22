@@ -17,7 +17,7 @@ spec:
       serviceAccountName: sre-ai-agent
       containers:
       - name: main
-        image: ghcr.io/tonygilkerson/sre-ai-agent:latest@sha256:37877a96e1e97d7c54a0e5c17b18947d20d3e1943605852435796390ec27e5ef
+        image: ghcr.io/tonygilkerson/sre-ai-agent:latest@sha256:5c0ceccf739d6d50c0a3be15c29e35735c06a33e7aafefa7f1f1a32beb8599c3
         command:
         - /bin/bash
         - -c

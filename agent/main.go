@@ -43,7 +43,32 @@ func (m *SreAiAgent) GrepDir(ctx context.Context, directoryArg *dagger.Directory
 }
 
 // Returns a list of pods from the Kubernetes API
-func (m *SreAiAgent) GetKubernetesPods(ctx context.Context, kubernetesServiceAccountDir *dagger.Directory,) (string, error) {
+func (m *SreAiAgent) GetPods(
+	// The context
+	ctx context.Context, 
+	// A directory that contains the Kubernetes service account token and ca.crt
+	// This is the directory that is automatically mounted in the Pod at /var/run/secrets/kubernetes.io/serviceaccount
+	kubernetesServiceAccountDir *dagger.Directory,
+	) (string, error) {
+
+		body, err := m.GetKubeAPI(ctx, kubernetesServiceAccountDir,"/api/v1/pods")
+    if err != nil {
+        return "", fmt.Errorf("failed to call GetKubeAPI and read response body: %w", err)
+    }
+
+    return string(body), nil
+}
+
+// Returns a list of pods from the Kubernetes API
+func (m *SreAiAgent) GetKubeAPI(
+	// The context
+	ctx context.Context, 
+	// A directory that contains the Kubernetes service account token and ca.crt
+	// This is the directory that is automatically mounted in the Pod at /var/run/secrets/kubernetes.io/serviceaccount
+	kubernetesServiceAccountDir *dagger.Directory,
+	// The Kubernetes API path, eg "/api/v1/pods" to get Pods 
+	apiPath string,
+	) (string, error) {
     // Read the service account token
     token, err := kubernetesServiceAccountDir.File("token").Contents(ctx)
     if err != nil {
@@ -62,7 +87,7 @@ func (m *SreAiAgent) GetKubernetesPods(ctx context.Context, kubernetesServiceAcc
     client := &http.Client{Transport: &http.Transport{TLSClientConfig: tlsConfig}}
 
     // Create and send the request
-    req, err := http.NewRequest("GET", "https://kubernetes.default.svc/api/v1/pods", nil)
+    req, err := http.NewRequest("GET", "https://kubernetes.default.svc" + apiPath, nil)
     if err != nil {
         return "", fmt.Errorf("failed to create request: %w", err)
     }

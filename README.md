@@ -19,7 +19,17 @@ dagger -c 'publish ghcr.io tonygilkerson env://GHCR_TOKEN'
 dagger call publish --source=./agent --registry=ghcr.io --username=tonygilkerson --password=env://GHCR_TOKEN
 ```
 
-Useful for debugging:
+## Calling the Agent
+
+```sh
+# Dagger CLI
+> get-pods "../var/run/secrets/kubernetes.io/serviceaccount" # Not sure why ../ is needed?
+
+# Dagger Shell
+dagger call get-pods --kubernetesServiceAccountDir=/var/run/secrets/kubernetes.io/serviceaccount
+```
+
+## Useful for debugging:
 
 ```sh
 $ dagger -c 'container | from alpine | with-secret-variable FOO env://GHCR_TOKEN | with-exec -- sh -c "echo secret is \$FOO" | stdout'
