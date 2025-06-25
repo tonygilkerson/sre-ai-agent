@@ -1,108 +1,49 @@
-// A generated module for SreAiAgent functions
-//
-// This module has been generated via dagger init and serves as a reference to
-// basic module structure as you get started with Dagger.
-//
-// Two functions have been pre-created. You can modify, delete, or add to them,
-// as needed. They demonstrate usage of arguments and return types using simple
-// echo and grep commands. The functions can be called from the dagger CLI or
-// from one of the SDKs.
-//
-// The first line in this comment block is a short description line and the
-// rest is a long description with more detail on the module's purpose or usage,
-// if appropriate. All modules should have a short description.
-
+// An SRE Agent use to look at the PODs in the cluster and make recommendations
 package main
 
 import (
-	"context"
 	"dagger/sre-ai-agent/internal/dagger"
-	"fmt"
-	"io"
-	"net/http"
-	"crypto/tls"
-  "crypto/x509"
-
 )
 
-type SreAiAgent struct{}
+type SreAiAgent struct {}
 
-// Returns a container that echoes whatever string argument is provided
-func (m *SreAiAgent) ContainerEcho(stringArg string) *dagger.Container {
-	return dag.Container().From("alpine:latest").WithExec([]string{"echo", stringArg})
-}
+// An agent use to inspect the workloads in a cluster and report on recommendations
+func (m *SreAiAgent) SreAiAgent(
+	// The task to perform
+	assignment string,
 
-// Returns lines that match a pattern in the files of the provided Directory
-func (m *SreAiAgent) GrepDir(ctx context.Context, directoryArg *dagger.Directory, pattern string) (string, error) {
-	return dag.Container().
-		From("alpine:latest").
-		WithMountedDirectory("/mnt", directoryArg).
-		WithWorkdir("/mnt").
-		WithExec([]string{"grep", "-R", pattern, "."}).
-		Stdout(ctx)
-}
+	// The archive directory for storing results in persistent storage
+	archiveDir *dagger.Directory,
 
-// Returns a list of pods from the Kubernetes API
-func (m *SreAiAgent) GetPods(
-	// The context
-	ctx context.Context, 
 	// A directory that contains the Kubernetes service account token and ca.crt
 	// This is the directory that is automatically mounted in the Pod at /var/run/secrets/kubernetes.io/serviceaccount
 	kubernetesServiceAccountDir *dagger.Directory,
-	) (string, error) {
 
-		body, err := m.GetKubeAPI(ctx, kubernetesServiceAccountDir,"/api/v1/pods")
-    if err != nil {
-        return "", fmt.Errorf("failed to call GetKubeAPI and read response body: %w", err)
-    }
+) *dagger.Container {
 
-    return string(body), nil
+	// The tools, inputs and outputs
+	sandbox := dag.Sandbox(archiveDir, kubernetesServiceAccountDir)
+
+	// The workspace for you to work on your assignment
+	env := dag.Env().
+		WithSandboxInput("sandbox", sandbox, "The tools you can use to complete your assignment.").
+		WithStringInput("assignment", assignment, "The task to complete.").
+		WithSandboxOutput("results", "The completed task results, eg. html and markdown reports.")
+
+	// The agentic loop
+	work := dag.LLM().
+		WithEnv(env).
+		WithPrompt(`
+			You are an expert Kubernetes engineer on the Site Reliability Team.
+			You have access to a sandbox container that you can use to publish your results.
+			Use the default directory in the sandbox container.
+			You have access to an archive directory where you can save your results in persistent storage. 
+			You can also read past results from the archive directory if needed. 
+			This is good if you want to report on progress towards your recommendations. 
+			Your assignment is : $assignment
+		`)
+
+	// return the completed results
+	return work.Env().Output("results").AsSandbox().Container()
 }
 
-// Returns a list of pods from the Kubernetes API
-func (m *SreAiAgent) GetKubeAPI(
-	// The context
-	ctx context.Context, 
-	// A directory that contains the Kubernetes service account token and ca.crt
-	// This is the directory that is automatically mounted in the Pod at /var/run/secrets/kubernetes.io/serviceaccount
-	kubernetesServiceAccountDir *dagger.Directory,
-	// The Kubernetes API path, eg "/api/v1/pods" to get Pods 
-	apiPath string,
-	) (string, error) {
-    // Read the service account token
-    token, err := kubernetesServiceAccountDir.File("token").Contents(ctx)
-    if err != nil {
-        return "", fmt.Errorf("failed to read service account token: %w", err)
-    }
-
-    // Read the CA certificate and set up HTTP client
-    caCertString, err := kubernetesServiceAccountDir.File("ca.crt").Contents(ctx)
-    if err != nil {
-        return "", fmt.Errorf("failed to read CA cert: %w", err)
-    }
-		caCert := []byte(caCertString)
-    caCertPool := x509.NewCertPool()
-    caCertPool.AppendCertsFromPEM(caCert)
-    tlsConfig := &tls.Config{RootCAs: caCertPool}
-    client := &http.Client{Transport: &http.Transport{TLSClientConfig: tlsConfig}}
-
-    // Create and send the request
-    req, err := http.NewRequest("GET", "https://kubernetes.default.svc" + apiPath, nil)
-    if err != nil {
-        return "", fmt.Errorf("failed to create request: %w", err)
-    }
-    req.Header.Set("Authorization", "Bearer "+string(token))
-
-    resp, err := client.Do(req)
-    if err != nil {
-        return "", fmt.Errorf("failed to call Kubernetes API: %w", err)
-    }
-    defer resp.Body.Close()
-
-    body, err := io.ReadAll(resp.Body)
-    if err != nil {
-        return "", fmt.Errorf("failed to read response body: %w", err)
-    }
-
-    return string(body), nil
-}

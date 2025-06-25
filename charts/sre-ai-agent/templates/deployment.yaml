@@ -17,7 +17,7 @@ spec:
       serviceAccountName: sre-ai-agent
       containers:
       - name: main
-        image: ghcr.io/tonygilkerson/sre-ai-agent:latest@sha256:5c0ceccf739d6d50c0a3be15c29e35735c06a33e7aafefa7f1f1a32beb8599c3
+        image: ghcr.io/tonygilkerson/sre-ai-agent:latest@sha256:854ff5ce58a7f5f791644c7d72542cdde1f02f6c42672ff9864a3b2dc928f51a
         command:
         - /bin/bash
         - -c
@@ -28,6 +28,16 @@ spec:
         env:
         - name: "_EXPERIMENTAL_DAGGER_RUNNER_HOST"
           value: "unix:///run/dagger/engine.sock"
+        - name: GEMINI_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: dagger-llm
+              key: GEMINI_API_KEY
+        - name: GEMINI_MODEL
+          valueFrom:
+            secretKeyRef:
+              name: dagger-llm
+              key: GEMINI_MODEL
         volumeMounts:
         - name: dagger-engine-socket
           mountPath: /run/dagger

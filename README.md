@@ -19,14 +19,28 @@ dagger -c 'publish ghcr.io tonygilkerson env://GHCR_TOKEN'
 dagger call publish --source=./agent --registry=ghcr.io --username=tonygilkerson --password=env://GHCR_TOKEN
 ```
 
+## Secrets
+
+Create the secrets for the dagger LLM
+
+```sh
+# be sure to source .env first
+source .env
+
+kubectl -n agent-wrk create secret generic dagger-llm \
+  --from-literal=GEMINI_API_KEY="$GEMINI_API_KEY" \
+  --from-literal=GEMINI_MODEL="$GEMINI_MODEL"
+```
+
 ## Calling the Agent
 
 ```sh
 # Dagger CLI
-> get-pods "../var/run/secrets/kubernetes.io/serviceaccount" # Not sure why ../ is needed?
+dagger call sre-ai-agent \
+  --assignment="Summarize the resource usage for all the pods in the cluster" \
+  --archive-dir="." \
+  --kubernetes-service-account-dir=../var/run/secrets/kubernetes.io/serviceaccount
 
-# Dagger Shell
-dagger call get-pods --kubernetesServiceAccountDir=/var/run/secrets/kubernetes.io/serviceaccount
 ```
 
 ## Useful for debugging:
