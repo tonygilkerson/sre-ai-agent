@@ -3,20 +3,18 @@ package main
 
 import (
 	"context"
-	"crypto/tls"
-	"crypto/x509"
 	"dagger/sandbox/internal/dagger"
 	"fmt"
+	"crypto/tls"
+	"crypto/x509"
 	"io"
 	"net/http"
 )
 
 type Sandbox struct {
-	// Container for publishing results
-	Container *dagger.Container
 
 	// Archive director for saving results for later retrieval
-	Archive *dagger.Directory
+	ArchiveDir *dagger.Directory
 
 	// A directory that contains the Kubernetes service account token and ca.crt
 	// This is the directory that is automatically mounted in the Pod at /var/run/secrets/kubernetes.io/serviceaccount
@@ -24,12 +22,8 @@ type Sandbox struct {
 }
 
 func New(archiveDir *dagger.Directory, kubernetesServiceAccountDir *dagger.Directory) *Sandbox {
-	// A container to store the results
-	results := dag.Container().From("nginx:latest").WithWorkdir("/usr/share/nginx/html")
-
 	return &Sandbox{
-		Container:                   results,
-		Archive:                     archiveDir,
+		ArchiveDir:                  archiveDir,
 		KubernetesServiceAccountDir: kubernetesServiceAccountDir,
 	}
 }
@@ -41,43 +35,43 @@ func (m *Sandbox) ReadArchiveFile(
 	// The path to the archive file
 	path string,
 ) (string, error) {
-	
-	return m.Archive.File(path).Contents(ctx)
+
+	return m.ArchiveDir.File(path).Contents(ctx)
 }
 
 // Write a file to the archive directory
 func (m *Sandbox) WriteArchiveFile(
+	ctx context.Context,
 	// The path to the archive file
 	path string,
 	// The contents of the file
 	content string,
 ) *Sandbox {
 
-	m.Archive.WithNewFile(path, content)
+	m.ArchiveDir = m.ArchiveDir.WithNewFile(path, content)
+
 	return m
 }
 
-// Read a file from the container
-func (m *Sandbox) ReadContainerFile(
-	// The context
-	ctx context.Context,
-	// The path to the file we want to read
-	path string,
-) (string, error) {
+// List all of the files in the Archive
+func (m *Sandbox) ListArchiveFiles(ctx context.Context) (string, error) {
 
-	return m.Container.File(path).Contents(ctx)
-}
+	// listingArr, err := m.ArchiveDir.Entries(ctx)
+	// if err != nil {
+	// 	return "", err
+	// }
 
-// Write a file to the container
-func (m *Sandbox) WriteContainerFile(
-	// The path to the file we want to write
-	path string,
-	// The contents of the file
-	content string,
-) *Sandbox {
+	// listing := strings.Join(listingArr, " ")
 
-	m.Container.WithNewFile(path, content)
-	return m
+	// // Return the Directory with the assignment completed
+	// return listing, nil
+
+	return dag.Container().
+		From("alpine:3").
+		WithDirectory("/src", m.ArchiveDir).
+		WithWorkdir("/src").
+		WithExec([]string{"tree", "."}).
+		Stdout(ctx)
 }
 
 // Returns a list of pods from the Kubernetes API
@@ -89,6 +83,9 @@ func (m *Sandbox) GetPods(ctx context.Context) (string, error) {
 	}
 
 	return string(body), nil
+
+	// fakejson := `{"podName": "fake"}`
+	// return fakejson, nil
 }
 
 // Returns a list of pods from the Kubernetes API
@@ -97,6 +94,7 @@ func (m *Sandbox) GetKubeAPI(
 	ctx context.Context,
 	// The Kubernetes API path, eg "/api/v1/pods" to get Pods
 	apiPath string,
+
 ) (string, error) {
 
 	// Read the service account token

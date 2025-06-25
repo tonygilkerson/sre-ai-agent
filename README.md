@@ -38,16 +38,24 @@ kubectl -n agent-wrk create secret generic dagger-llm \
 # Dagger CLI
 dagger call sre-ai-agent \
   --assignment="Summarize the resource usage for all the pods in the cluster" \
-  --archive-dir="." \
+  --archive-dir="/" \
   --kubernetes-service-account-dir=../var/run/secrets/kubernetes.io/serviceaccount
 
+dagger call sre-ai-agent \
+  --assignment="Get a list of pods in the cluster and use that list to count the number of pods.  Save the pod count in a simple markdown file called count.md then store that file in the archive folder" \
+  --archive-dir="/" \
+  --kubernetes-service-account-dir=../var/run/secrets/kubernetes.io/serviceaccount
+# or dagger shell
+
+resultsDir=$(sre-ai-agent "Get a list of pods in the cluster and use that list to count the number of pods.  Save the pod count in a simple markdown file called count.md then store that file in the archive folder" "/" "../var/run/secrets/kubernetes.io/serviceaccount") 
+container | from "busybox" | with-workdir "/wrk" | with-directory "/wrk" $resultsDir | with-exec cat ./archive/count.md | stdout
 ```
 
 ## Useful for debugging:
 
 ```sh
 $ dagger -c 'container | from alpine | with-secret-variable FOO env://GHCR_TOKEN | with-exec -- sh -c "echo secret is \$FOO" | stdout'
-```
+```../var/run/secrets/kubernetes.io/serviceaccount
 
 ```sh
 func (m *MyModule) SetEnvVar(ctx context.Context) (string, error) {
