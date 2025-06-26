@@ -3,10 +3,10 @@ package main
 
 import (
 	"context"
-	"dagger/sandbox/internal/dagger"
-	"fmt"
 	"crypto/tls"
 	"crypto/x509"
+	"dagger/sandbox/internal/dagger"
+	"fmt"
 	"io"
 	"net/http"
 )
@@ -54,24 +54,14 @@ func (m *Sandbox) WriteArchiveFile(
 }
 
 // List all of the files in the Archive
-func (m *Sandbox) ListArchiveFiles(ctx context.Context) (string, error) {
-
-	// listingArr, err := m.ArchiveDir.Entries(ctx)
-	// if err != nil {
-	// 	return "", err
-	// }
-
-	// listing := strings.Join(listingArr, " ")
-
-	// // Return the Directory with the assignment completed
-	// return listing, nil
-
+func (m *Sandbox) ListArchiveFiles(ctx context.Context) (string,error) {
 	return dag.Container().
 		From("alpine:3").
 		WithDirectory("/src", m.ArchiveDir).
 		WithWorkdir("/src").
-		WithExec([]string{"tree", "."}).
+		WithExec([]string{"ls", "-la", "."}).
 		Stdout(ctx)
+
 }
 
 // Returns a list of pods from the Kubernetes API
@@ -84,8 +74,6 @@ func (m *Sandbox) GetPods(ctx context.Context) (string, error) {
 
 	return string(body), nil
 
-	// fakejson := `{"podName": "fake"}`
-	// return fakejson, nil
 }
 
 // Returns a list of pods from the Kubernetes API
