@@ -19,6 +19,7 @@ type Sandbox struct {
 	// A directory that contains the Kubernetes service account token and ca.crt
 	// This is the directory that is automatically mounted in the Pod at /var/run/secrets/kubernetes.io/serviceaccount
 	KubernetesServiceAccountDir *dagger.Directory
+
 }
 
 func New(archiveDir *dagger.Directory, kubernetesServiceAccountDir *dagger.Directory) *Sandbox {
@@ -66,7 +67,17 @@ func (m *Sandbox) ListArchiveFiles(ctx context.Context) (string,error) {
 
 // Returns a list of pods from the Kubernetes API
 func (m *Sandbox) GetPods(ctx context.Context) (string, error) {
+	
+	// This is a hack to make it easy to do some testing when run outside of a cluster
+	_, err := m.KubernetesServiceAccountDir.File("token").Contents(ctx)
+	if err != nil {
+		println ("No token found, DEV mode assumed. Returning sample pod list")
+		println ("START [" + string(samplePodList) + "] END") 
 
+		return string(samplePodList), nil
+	}
+
+	// Hit the k8s api for real
 	body, err := m.GetKubeAPI(ctx, "/api/v1/pods")
 	if err != nil {
 		return "", fmt.Errorf("failed to call GetKubeAPI and read response body: %w", err)
@@ -121,4 +132,43 @@ func (m *Sandbox) GetKubeAPI(
 	}
 
 	return string(body), nil
+}
+
+// Run a jq CLI command to apply a filter over the input content
+//  
+// For example if:  content: {"foo": "abcd"} 
+//   and jqcmd: jq '.foo' 
+//   then the return value is: "abcd"
+//  
+//   and jqcmd: jq -r '.foo' 
+//   then the return value is: abcd
+//  
+// If the jqCmd is successful the filter output is returned
+// If any errors occurs the error text will be returned instead
+func (m *Sandbox) ApplyJqFilter(
+	// The context
+	ctx context.Context,
+
+	// A jq CLI command string e.g. " jq '.foo' "
+	// The jqCmd formate is: jq [options] <jq filter>
+	// The content will be piped to the jq command via stdin so the jqCmd should not specify an input file
+	jqCmd string,
+	// The JSON contents to apply a filter to
+	content string,
+) string {
+
+	fullCmd := fmt.Sprintf("echo '%s' | %s", content, jqCmd)
+
+	// Apply jq filter to content
+	jqResponse, err := dag.Container().
+		From("stedolan/jq").
+		WithWorkdir("/wrk").
+		WithNewFile("content.json", content).
+		WithExec([]string{"sh", "-c", fullCmd}).
+		Stdout(ctx)
+
+	if err != nil {
+		return err.Error()
+	}
+	return jqResponse
 }

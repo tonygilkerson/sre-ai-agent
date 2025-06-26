@@ -21,14 +21,14 @@ func (m *SreAiAgent) SreAiAgent(
 
 ) *dagger.Directory {
 
-	// // The tools, inputs and outputs
-	// sandbox := dag.Sandbox(archiveDir, kubernetesServiceAccountDir)
+	// The tools, inputs and outputs
+	sandbox := dag.Sandbox(archiveDir, kubernetesServiceAccountDir)
 
 	// The workspace for you to work on your assignment
 	env := dag.Env().
-		WithSandboxInput("sandbox", dag.Sandbox(archiveDir, kubernetesServiceAccountDir), "The tools you can use to complete your assignment.").
+		WithSandboxInput("sandbox", sandbox, "The tools you can use to complete your assignment.").
 		WithStringInput("assignment", assignment, "The task to complete.").
-		WithSandboxOutput("sandbox", "The completed task results, eg. html and markdown reports.")
+		WithSandboxOutput("results", "The completed task results, eg. html and markdown reports.")
 
 	// The agentic loop
 	work := dag.LLM().
@@ -40,7 +40,7 @@ func (m *SreAiAgent) SreAiAgent(
 		Your assignment is : $assignment
 		`)
 
-	resultsDirectory := work.Env().Output("sandbox").AsSandbox().ArchiveDir()
+	resultsDirectory := work.Env().Output("results").AsSandbox().ArchiveDir()
 
   // Return the Directory with the assignment completed
   return resultsDirectory
