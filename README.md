@@ -43,13 +43,19 @@ dagger call sre-ai-agent \
   export --path=.
 
 dagger call sre-ai-agent \
-  --assignment="This is a test to see if you can call getPods then save the pod list" \
+  --assignment="Get a list of pods and save the pod list data in an archive file name pod-list.txt" \
+  --archive-dir="." \
+  --kubernetes-service-account-dir="." \
+  export --path=.
+ 
+dagger call sre-ai-agent \
+  --assignment="Get a list of pods, extract relevant information such as pod name and namespace.  Save the extracted information in an archive file named pod-and-ns.json" \
   --archive-dir="." \
   --kubernetes-service-account-dir="." \
   export --path=.
 
 dagger call sre-ai-agent \
-  --assignment="Get a list of pods, extract relevant information (name, namespace, resource allocation). You will need to call applyJqFilter to extract information from the pod list.  Do NOT call but instead tell me what you would use for the jqFilter and content if you did call the function." \
+  --assignment="This is a test to see if you can use the tools provided. First call GetPods to get a list of pods. Second, call ApplyJqFilter to extract the pod name and namespace. Third call WriteArchiveFile to save the extracted information in a file called pod-report.txt. Do NOT call  GetKubeAPI, ReadArchiveFile or ListArchiveFile. Those functions are not ready. " \
   --archive-dir="." \
   --kubernetes-service-account-dir="." \
   export --path=.

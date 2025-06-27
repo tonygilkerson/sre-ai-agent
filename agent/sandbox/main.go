@@ -149,7 +149,7 @@ func (m *Sandbox) ApplyJqFilter(
 
 ) *dagger.File {
 
-	fullCmd := fmt.Sprintf("jq %s pods.json > filter-results.json", jqFilter)
+	fullCmd := fmt.Sprintf("jq '%s' pods.json > filter-results.json", jqFilter)
 
 	// Apply jq filter to content
 	return dag.Container().
