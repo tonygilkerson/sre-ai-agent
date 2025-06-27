@@ -40,18 +40,23 @@ func (m *Sandbox) ReadArchiveFile(
 	return m.ArchiveDir.File(path).Contents(ctx)
 }
 
-// Write a file to the archive directory
+// // Write a file to the archive directory
 func (m *Sandbox) WriteArchiveFile(
 	ctx context.Context,
 
+	// The file name
+	fileName string,
+
 	// The contents of the file
-	content *dagger.Directory,
+	content *dagger.File,
 ) *Sandbox {
 
-	m.ArchiveDir = content
+	m.ArchiveDir = m.ArchiveDir.WithFile(fileName, content)
 
 	return m
+
 }
+
 
 // List all of the files in the Archive
 func (m *Sandbox) ListArchiveFiles(ctx context.Context) (string,error) {
@@ -65,13 +70,13 @@ func (m *Sandbox) ListArchiveFiles(ctx context.Context) (string,error) {
 }
 
 // Returns a list of pods from the Kubernetes API
-func (m *Sandbox) GetPods(ctx context.Context) *dagger.Directory {
+func (m *Sandbox) GetPods(ctx context.Context) *dagger.File {
 	
 	// This is a hack to make it easy to do some testing when run outside of a cluster
 	_, err := m.KubernetesServiceAccountDir.File("token").Contents(ctx)
 	if err != nil {
 		println ("No token found, DEV mode assumed. Returning sample pod list")
-		return dag.Directory().WithNewFile("pods.json", string(samplePodList))
+		return dag.File("pods.json", string(samplePodList))
 	}
 
 	// Hit the k8s api for real
@@ -80,7 +85,7 @@ func (m *Sandbox) GetPods(ctx context.Context) *dagger.Directory {
 		panic(err)
 	}
 
-	return dag.Directory().WithNewFile("pods.json", string(body))
+	return dag.File("pods.json", string(body))
 
 }
 
@@ -140,37 +145,18 @@ func (m *Sandbox) ApplyJqFilter(
 	jqFilter string,
 
 	// The JSON contents to apply a filter to
-	content *dagger.Directory,
+	content *dagger.File,
 
-) *dagger.Directory {
+) *dagger.File {
 
-	fmt.Printf("DEBUG jqFilter %s, content %s", jqFilter, content)
+	fullCmd := fmt.Sprintf("jq %s pods.json > filter-results.json", jqFilter)
 
 	// Apply jq filter to content
 	return dag.Container().
 		From("stedolan/jq").
 		WithWorkdir("/wrk").
-		WithDirectory("/wrk",content).
-		WithExec([]string{"jq", jqFilter, "pods.json", ">", "filter-results.json"}).
-		Directory("/wrk")
+		WithFile("pods.json", content).
+		WithExec([]string{"sh", "-c", fullCmd}).
+		File("filter-results.json")
 }
 
-// validate json content
-func (m *Sandbox) ValidateJson(
-	// The context
-	ctx context.Context,
-
-	// The JSON contents to apply a filter to
-	content *dagger.Directory,
-) bool {
-
-	fmt.Printf("DEBUG got content: %s", content)
-
-	if ctx == nil{
-		fmt.Println("no CTX")
-	}
-
-	// Apply jq filter to content
-	return true
-
-}

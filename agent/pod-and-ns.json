@@ -1,0 +1,20 @@
+{
+  "name": "calico-kube-controllers-759cd8b574-4wmb2",
+  "namespace": "kube-system"
+}
+{
+  "name": "calico-node-f5rbq",
+  "namespace": "kube-system"
+}
+{
+  "name": "coredns-7896dbf49-tmx5q",
+  "namespace": "kube-system"
+}
+{
+  "name": "hostpath-provisioner-5fbc49d86c-9cqt2",
+  "namespace": "kube-system"
+}
+{
+  "name": "metrics-server-df8dbf7f5-dhf8q",
+  "namespace": "kube-system"
+}
