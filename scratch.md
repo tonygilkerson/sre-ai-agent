@@ -26,3 +26,7 @@ time curl -s -X POST http://192.168.50.196:11434/api/generate \
 
 env=$(env | with-container-input 'base' $base 'a base container' | with-container-output 'python-dev' 'a container with python dev tools')
 llm | with-env $env | with-prompt "You have an alpine container. Install tools to develop with Python." | env | output python-dev | as-container | terminal
+
+
+
+`{"items":[{"metadata":{"name":"nginx-deployment-5d5b6b6b6b-abcde"}},{"metadata":{"name":"busybox-pod"}}]}`

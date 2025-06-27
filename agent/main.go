@@ -28,7 +28,7 @@ func (m *SreAiAgent) SreAiAgent(
 	env := dag.Env().
 		WithSandboxInput("sandbox", sandbox, "The tools you can use to complete your assignment.").
 		WithStringInput("assignment", assignment, "The task to complete.").
-		WithSandboxOutput("results", "The completed task results, eg. html and markdown reports.")
+		WithSandboxOutput("results", "The completed task results, eg. reports.")
 
 	// The agentic loop
 	work := dag.LLM().
@@ -36,7 +36,6 @@ func (m *SreAiAgent) SreAiAgent(
 		WithPrompt(`
 		You are an expert Kubernetes engineer on the Site Reliability Team.
 		You have access to an archive directory where you can save your assignment results. 
-		You can read past results from the archive directory if needed. This is good if you want to look up past assignment results. 
 		Your assignment is : $assignment
 		`)
 

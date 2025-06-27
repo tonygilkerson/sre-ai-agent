@@ -1,5 +1,6 @@
 package main
 
+const samplePodList2 = "This is a test"
 const samplePodList = `
 {
     "apiVersion": "v1",

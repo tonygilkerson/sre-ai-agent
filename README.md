@@ -43,14 +43,25 @@ dagger call sre-ai-agent \
   export --path=.
 
 dagger call sre-ai-agent \
-  --assignment="Get a list of pods in the cluster and use that list to create a pod report. This report should contain a human readable table that with one pod per row, summarizing the pod information. For each pod on the report include its name, the namespace it is contained in its resource allocation, eg. cpu and memory.  Save this report in markdown format in a file named pod-info-YYYY-MM-DD-HH-mm.md where YYYY-MM-DD-HH-mm is the actual Year, Month, Day, Hour and Minute when the report was created." \
+  --assignment="This is a test to see if you can call getPods then save the pod list" \
   --archive-dir="." \
-  --kubernetes-service-account-dir=../var/run/secrets/kubernetes.io/serviceaccount \
+  --kubernetes-service-account-dir="." \
+  export --path=.
+
+dagger call sre-ai-agent \
+  --assignment="Get a list of pods, extract relevant information (name, namespace, resource allocation). You will need to call applyJqFilter to extract information from the pod list.  Do NOT call but instead tell me what you would use for the jqFilter and content if you did call the function." \
+  --archive-dir="." \
+  --kubernetes-service-account-dir="." \
   export --path=.
 
 # or dagger shell
 resultsDir=$(sre-ai-agent "this is a test to see if you can call the getPods function. If you are successful at doing that then save a file to the archive folder named success.txt with the contents SUCCESS" "/" "../var/run/secrets/kubernetes.io/serviceaccount") 
 container | from "busybox" | with-workdir "/wrk" | with-directory "/wrk" $resultsDir | with-exec cat ./archive/count.md | stdout
+
+
+# dagger shell (testing)
+# type "dagger" in the agent folder and then
+sandbox "." "DEV"
 ```
 
 ## Useful for debugging:
