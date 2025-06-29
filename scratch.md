@@ -30,3 +30,14 @@ llm | with-env $env | with-prompt "You have an alpine container. Install tools t
 
 
 `{"items":[{"metadata":{"name":"nginx-deployment-5d5b6b6b6b-abcde"}},{"metadata":{"name":"busybox-pod"}}]}`
+
+
+ ! Error 429, Message: You exceeded your current quota, please check your plan and billing details. For more information on this error, head to:
+    │   https://ai.google.dev/gemini-api/docs/rate-limits., Status: RESOURCE_EXHAUSTED, Details: [map[@type:type.googleapis.com/google.rpc.QuotaFailure
+    │   violations:[map[quotaDimensions:map[location:global model:gemini-2.0-flash] quotaId:GenerateRequestsPerDayPerProjectPerModel-FreeTier
+    │   quotaMetric:generativelanguage.googleapis.com/generate_content_free_tier_requests quotaValue:200]]] map[@type:type.googleapis.com/google.rpc.Help
+    │   links:[map[description:Learn more about Gemini API quotas url:https://ai.google.dev/gemini-api/docs/rate-limits]]]
+    │   map[@type:type.googleapis.com/google.rpc.RetryInfo retryDelay:4s]]
+
+
+     ["sh", "-c", "jq -r '.items[].metadata.name' content.json > jqout"])co

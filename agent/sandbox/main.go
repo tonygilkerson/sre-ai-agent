@@ -136,10 +136,17 @@ func (m *Sandbox) GetKubeAPI(
 	return string(body), nil
 }
 
+
 // Apply a jq filter to on the input content and return the results
 func (m *Sandbox) ApplyJqFilter(
 	// The context
 	ctx context.Context,
+
+	// Options for the jq command.  For example:
+	// -r   output raw strings (not json-quoted)
+	// -c   compact instead of pretty-printed output
+	// -rc  can put multiple options to gether
+	jqOptions string,
 
 	// A jq filter expression, some examples: '.', '.name', '.[]', '.[] | select(.status == "active")', etc... 
 	jqFilter string,
@@ -147,16 +154,34 @@ func (m *Sandbox) ApplyJqFilter(
 	// The JSON contents to apply a filter to
 	content *dagger.File,
 
-) *dagger.File {
+) (*dagger.File, error) {
 
-	fullCmd := fmt.Sprintf("jq '%s' pods.json > filter-results.json", jqFilter)
+	jqScript := fmt.Sprintf("jq %s '%s' content.json", jqOptions, jqFilter)
+	jqScriptFile := dag.File("jqscript.sh",jqScript)
 
 	// Apply jq filter to content
-	return dag.Container().
+	output, err := dag.Container().
 		From("stedolan/jq").
 		WithWorkdir("/wrk").
-		WithFile("pods.json", content).
-		WithExec([]string{"sh", "-c", fullCmd}).
-		File("filter-results.json")
+		WithFile("content.json", content).
+		WithFile("jqscript.sh", jqScriptFile).
+		WithExec([]string{"sh", "jqscript.sh"}).
+		Stdout(ctx)
+
+	if err != nil {
+    return nil, err
+	}
+
+	file := dag.Directory().WithNewFile("output.txt", output).File("output.txt")
+	return file, nil
+}
+
+func (m *Sandbox) TestFilter(ctx context.Context, jqOptions string, jqFilter string, content string ) string {
+	c := dag.File("content.json", content)
+
+	f,_ := m.ApplyJqFilter(ctx, jqOptions, jqFilter, c)
+
+	result, _ := f.Contents(ctx)
+	return result
 }
 

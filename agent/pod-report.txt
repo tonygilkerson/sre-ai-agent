@@ -1,0 +1,10 @@
+[
+  {
+    "name": "open-webui-0",
+    "namespace": "open-webui"
+  },
+  {
+    "name": "open-webui-ollama-78f7f9765c-jm7dw",
+    "namespace": "open-webui"
+  }
+]
