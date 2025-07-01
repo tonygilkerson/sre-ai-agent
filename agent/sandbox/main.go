@@ -40,7 +40,6 @@ func (m *Sandbox) ReadArchiveFile(
 	return m.ArchiveDir.File(path).Contents(ctx)
 }
 
-// // Write a file to the archive directory
 func (m *Sandbox) WriteArchiveFile(
 	ctx context.Context,
 
@@ -69,7 +68,10 @@ func (m *Sandbox) ListArchiveFiles(ctx context.Context) (string,error) {
 
 }
 
-// Returns a list of pods from the Kubernetes API
+// GetPods retrieves the list of Kubernetes pods as a Dagger file.
+// It queries the Kubernetes API for the actual pod list and returns the result
+// as a Dagger file named "pods.json".
+// Panics if there is an error fetching the pod list from the Kubernetes API.
 func (m *Sandbox) GetPods(ctx context.Context) *dagger.File {
 	
 	// This is a hack to make it easy to do some testing when run outside of a cluster
@@ -89,83 +91,45 @@ func (m *Sandbox) GetPods(ctx context.Context) *dagger.File {
 
 }
 
-// Returns a list of pods from the Kubernetes API
-func (m *Sandbox) GetKubeAPI(
-	// The context
-	ctx context.Context,
-	// The Kubernetes API path, eg "/api/v1/pods" to get Pods
-	apiPath string,
-
-) (string, error) {
-
-	// Read the service account token
-	token, err := m.KubernetesServiceAccountDir.File("token").Contents(ctx)
-	if err != nil {
-		return "", fmt.Errorf("failed to read service account token: %w", err)
+// GetKubeAPI retrieves data from the Kubernetes API server using the service account credentials
+// mounted in the pod. It sends a GET request to the specified apiPath (e.g., "/api/v1/pods").
+// The request is authenticated using the service account token and secured with the CA certificate
+// provided by Kubernetes. The function returns the response body as a string, or an error if any
+// step fails.
+//
+// Parameters:
+//   - ctx: The context for controlling cancellation and timeouts.
+//   - apiPath: The Kubernetes API path to query (e.g., "/api/v1/pods").
+//
+// Returns:
+//   - string: The response body from the Kubernetes API server.
+//   - error: An error if the request fails or if there are issues reading credentials or certificates.
 	}
 
-	// Read the CA certificate and set up HTTP client
-	caCertString, err := m.KubernetesServiceAccountDir.File("ca.crt").Contents(ctx)
-	if err != nil {
-		return "", fmt.Errorf("failed to read CA cert: %w", err)
-	}
-	caCert := []byte(caCertString)
-	caCertPool := x509.NewCertPool()
-	caCertPool.AppendCertsFromPEM(caCert)
-	tlsConfig := &tls.Config{RootCAs: caCertPool}
-	client := &http.Client{Transport: &http.Transport{TLSClientConfig: tlsConfig}}
-
-	// Create and send the request
-	req, err := http.NewRequest("GET", "https://kubernetes.default.svc"+apiPath, nil)
-	if err != nil {
-		return "", fmt.Errorf("failed to create request: %w", err)
-	}
-	req.Header.Set("Authorization", "Bearer "+string(token))
-
-	resp, err := client.Do(req)
-	if err != nil {
-		return "", fmt.Errorf("failed to call Kubernetes API: %w", err)
-	}
-	defer resp.Body.Close()
-
-	body, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return "", fmt.Errorf("failed to read response body: %w", err)
-	}
-
-	return string(body), nil
+	file := dag.Directory().WithNewFile("output.txt", output).File("output.txt")
+	return file, nil
 }
 
-
-// Apply a jq filter to on the input content and return the results
-func (m *Sandbox) ApplyJqFilter(
+// Run an awk script on the input content and return the results
+func (m *Sandbox) RunAwkScript(
 	// The context
 	ctx context.Context,
 
-	// Options for the jq command.  For example:
-	// -r   output raw strings (not json-quoted)
-	// -c   compact instead of pretty-printed output
-	// -rc  can put multiple options to gether
-	jqOptions string,
+	// An awk script file. 
+	script string,
 
-	// A jq filter expression, some examples: '.', '.name', '.[]', '.[] | select(.status == "active")', etc... 
-	jqFilter string,
-
-	// The JSON contents to apply a filter to
+	// The awk input file. The awk command will apply the `script` to this `content`
 	content *dagger.File,
 
 ) (*dagger.File, error) {
 
-	jqScript := fmt.Sprintf("jq %s '%s' content.json", jqOptions, jqFilter)
-	jqScriptFile := dag.File("jqscript.sh",jqScript)
-
 	// Apply jq filter to content
 	output, err := dag.Container().
-		From("stedolan/jq").
+		From("busybox").
 		WithWorkdir("/wrk").
-		WithFile("content.json", content).
-		WithFile("jqscript.sh", jqScriptFile).
-		WithExec([]string{"sh", "jqscript.sh"}).
+		WithFile("content.txt", content).
+		WithNewFile("script.awk", script).
+		WithExec([]string{"awk", "-f", "script.awk", "content.txt"}).
 		Stdout(ctx)
 
 	if err != nil {
@@ -176,12 +140,4 @@ func (m *Sandbox) ApplyJqFilter(
 	return file, nil
 }
 
-func (m *Sandbox) TestFilter(ctx context.Context, jqOptions string, jqFilter string, content string ) string {
-	c := dag.File("content.json", content)
-
-	f,_ := m.ApplyJqFilter(ctx, jqOptions, jqFilter, c)
-
-	result, _ := f.Contents(ctx)
-	return result
-}
-
+// DEVTODO stackrox/kube-linter:latest

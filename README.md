@@ -60,6 +60,24 @@ dagger call sre-ai-agent \
   --kubernetes-service-account-dir="." \
   export --path=.
 
+dagger call sre-ai-agent \
+  --assignment="First call GetPods to get a list of pods. Second, call ApplyJqFilter to extract the pod name and namespace. Third use the extracted information to create a simple human readable report, Lastly call WriteArchiveFile to save the report in a file called pod-report.txt." \
+  --archive-dir="." \
+  --kubernetes-service-account-dir="." \
+  export --path=.
+
+dagger call sre-ai-agent \
+  --assignment="First call GetPods to get a list of pods. Second, call ApplyJqFilter to extract the pod name and namespace in csv format. Third call RunAwkScript to format the extracted information into a simple human readable report. The report should have two columns with column heading, one for the pod name the second for the namespace. Lastly call WriteArchiveFile to save the report in a file called pod-report-hr.txt. Do not call readArchiveFile,  listArchiveFiles, or getKubeAPI they are not ready." \
+  --archive-dir="." \
+  --kubernetes-service-account-dir="." \
+  export --path=.
+
+dagger call sre-ai-agent \
+  --assignment="Get a list of pods list of pods. You can use ApplyJqFilter to parse the kubernetes manifests in the pod list if needed. Inspect the pod manifests in the list and make recommendations for how they might better conform to best practices. Lastly call WriteArchiveFile to save the report in a file called pod-recommendations.txt. Do not call runAwkScript, readArchiveFile,  listArchiveFiles, or getKubeAPI they are not ready." \
+  --archive-dir="." \
+  --kubernetes-service-account-dir="." \
+  export --path=.
+
 # or dagger shell
 resultsDir=$(sre-ai-agent "this is a test to see if you can call the getPods function. If you are successful at doing that then save a file to the archive folder named success.txt with the contents SUCCESS" "/" "../var/run/secrets/kubernetes.io/serviceaccount") 
 container | from "busybox" | with-workdir "/wrk" | with-directory "/wrk" $resultsDir | with-exec cat ./archive/count.md | stdout
