@@ -1,0 +1,30 @@
+KubeLinter development
+
+/wrk/content.json: (object: open-webui/open-webui-0 /v1, Kind=Pod) container "copy-app-data" does not have a read-only root file system (check: no-read-only-root-fs, remediation: Set readOnlyRootFilesystem to true in the container securityContext.)
+
+/wrk/content.json: (object: open-webui/open-webui-0 /v1, Kind=Pod) container "open-webui" does not have a read-only root file system (check: no-read-only-root-fs, remediation: Set readOnlyRootFilesystem to true in the container securityContext.)
+
+/wrk/content.json: (object: open-webui/open-webui-0 /v1, Kind=Pod) serviceAccount "open-webui" not found (check: non-existent-service-account, remediation: Create the missing service account, or refer to an existing service account.)
+
+/wrk/content.json: (object: open-webui/open-webui-0 /v1, Kind=Pod) container "copy-app-data" is not set to runAsNonRoot (check: run-as-non-root, remediation: Set runAsUser to a non-zero number and runAsNonRoot to true in your pod or container securityContext. Refer to https://kubernetes.io/docs/tasks/configure-pod-container/security-context/ for details.)
+
+/wrk/content.json: (object: open-webui/open-webui-0 /v1, Kind=Pod) container "open-webui" is not set to runAsNonRoot (check: run-as-non-root, remediation: Set runAsUser to a non-zero number and runAsNonRoot to true in your pod or container securityContext. Refer to https://kubernetes.io/docs/tasks/configure-pod-container/security-context/ for details.)
+
+/wrk/content.json: (object: open-webui/open-webui-0 /v1, Kind=Pod) container "copy-app-data" has cpu request 0 (check: unset-cpu-requirements, remediation: Set CPU requests for your container based on its requirements. Refer to https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/#requests-and-limits for details.)
+
+/wrk/content.json: (object: open-webui/open-webui-0 /v1, Kind=Pod) container "open-webui" has cpu request 0 (check: unset-cpu-requirements, remediation: Set CPU requests for your container based on its requirements. Refer to https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/#requests-and-limits for details.)
+
+/wrk/content.json: (object: open-webui/open-webui-0 /v1, Kind=Pod) container "copy-app-data" has memory limit 0 (check: unset-memory-requirements, remediation: Set memory limits for your container based on its requirements. Refer to https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/#requests-and-limits for details.)
+
+/wrk/content.json: (object: open-webui/open-webui-0 /v1, Kind=Pod) container "open-webui" has memory limit 0 (check: unset-memory-requirements, remediation: Set memory limits for your container based on its requirements. Refer to https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/#requests-and-limits for details.)
+
+/wrk/content.json: (object: open-webui/open-webui-ollama-78f7f9765c-jm7dw /v1, Kind=Pod) container "ollama" does not have a read-only root file system (check: no-read-only-root-fs, remediation: Set readOnlyRootFilesystem to true in the container securityContext.)
+
+/wrk/content.json: (object: open-webui/open-webui-ollama-78f7f9765c-jm7dw /v1, Kind=Pod) serviceAccount "open-webui-ollama" not found (check: non-existent-service-account, remediation: Create the missing service account, or refer to an existing service account.)
+
+/wrk/content.json: (object: open-webui/open-webui-ollama-78f7f9765c-jm7dw /v1, Kind=Pod) container "ollama" is not set to runAsNonRoot (check: run-as-non-root, remediation: Set runAsUser to a non-zero number and runAsNonRoot to true in your pod or container securityContext. Refer to https://kubernetes.io/docs/tasks/configure-pod-container/security-context/ for details.)
+
+/wrk/content.json: (object: open-webui/open-webui-ollama-78f7f9765c-jm7dw /v1, Kind=Pod) container "ollama" has cpu request 0 (check: unset-cpu-requirements, remediation: Set CPU requests for your container based on its requirements. Refer to https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/#requests-and-limits for details.)
+
+/wrk/content.json: (object: open-webui/open-webui-ollama-78f7f9765c-jm7dw /v1, Kind=Pod) container "ollama" has memory limit 0 (check: unset-memory-requirements, remediation: Set memory limits for your container based on its requirements. Refer to https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/#requests-and-limits for details.)
+

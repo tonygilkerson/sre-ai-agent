@@ -73,7 +73,7 @@ dagger call sre-ai-agent \
   export --path=.
 
 dagger call sre-ai-agent \
-  --assignment="Get a list of pods list of pods. You can use ApplyJqFilter to parse the kubernetes manifests in the pod list if needed. Inspect the pod manifests in the list and make recommendations for how they might better conform to best practices. Lastly call WriteArchiveFile to save the report in a file called pod-recommendations.txt. Do not call runAwkScript, readArchiveFile,  listArchiveFiles, or getKubeAPI they are not ready." \
+  --assignment="Get the pod manifest and use it to generate a linting report. Save the report in a file named pod-lint.txt" \
   --archive-dir="." \
   --kubernetes-service-account-dir="." \
   export --path=.
